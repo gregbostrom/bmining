@@ -22,49 +22,60 @@ Logic:
 
 **hashrate** - Fetch network hashrate from a reliable source.
 
-**mvp.Mar29** - Minimal Viable Product (MVP) to demo after a one week sprint.
-
 ## Sample Runs
 
 ```
+# Help
+$ bmining -h
+ usage: bmining [OPTION] [list of coins]
+
+   -d      dump network hash rates
+   -h      help
+   -s [n]  run simulation for [n] trials
+   -v      verbose
+
 # Fetch and dump network hashrates
 $ bmining -d
-Aeon           (AEON)   25.4 MH/s
-BLOC.money     (BLOC)    4.0 MH/s
-BitTube        (TUBE)   15.2 MH/s
-Bytecoin       (BCN)   513.4 MH/s
-Conceal        (CCX)     2.8 MH/s
-Dero           (DERO)   71.7 MH/s
-Electroneum    (ETN)       3 GH/s
-GRAFT          (GRFT)    8.7 MH/s
-Haven Protocol (XHV)    16.2 MH/s
-Karbo          (KRB)    24.2 MH/s
-Lethean        (LTHN)    2.1 MH/s
-Loki           (LOKI)  237.7 MH/s
-Masari         (MSR)     4.4 MH/s
-Monero         (XMR)   295.7 MH/s
-Ryo Currency   (RYO)     1.6 MH/s
-Stellite       (XTL)    10.7 MH/s
-Sumokoin       (SUMO)   70.0 MH/s
-TurtleCoin     (TRTL)  292.9 MH/s
-UltraNote      (XUN)   464.0 KH/s
-Webchain       (WEB)   737.1 KH/s
-X-CASH         (XCASH)   1.7 MH/s
+X-CASH         (XCASH)   1.5 MH/s    24h: $0.62    CryptoNight HeavyX
+Monero         (XMR)   307.8 MH/s    24h: $0.43    CryptoNight R (v4)
+Conceal        (CCX)     3.7 MH/s    24h: $0.43    CryptoNight Conceal
+Lethean        (LTHN)    2.0 MH/s    24h: $0.42    CryptoNight R (v4)
+GRAFT          (GRFT)    8.2 MH/s    24h: $0.32    CryptoNight v2
+Masari         (MSR)     5.5 MH/s    24h: $0.29    CryptoNight Fast v2
+Ryo Currency   (RYO)     2.2 MH/s    24h: $0.29    CryptoNight Heavy
+BitTube        (TUBE)   12.1 MH/s    24h: $0.25    CryptoNight Saber
+Haven Protocol (XHV)    20.4 MH/s    24h: $0.18    CryptoNight Haven
+Stellite       (XTL)    20.5 MH/s    24h: $0.12    CryptoNight v2
+TurtleCoin     (TRTL)  268.0 MH/s    24h: $0.12    CryptoNight-Lite v1
+Aeon           (AEON)   25.4 MH/s    24h: $0.08    CryptoNight-Lite v1
+Loki           (LOKI)  210.3 MH/s    24h: $0.02    CryptoNight Heavy
+BLOC.money     (BLOC)    4.4 MH/s    24h: $0.01    CryptoNight Haven
+Dero           (DERO)   80.3 MH/s    24h: $0.01    CryptoNight
+Karbo          (KRB)    32.3 MH/s    24h: $0.01    CryptoNight
+Electroneum    (ETN)       3 GH/s    24h: $0.01    CryptoNight
+Sumokoin       (SUMO)   93.7 MH/s    24h: $0.01    CryptoNight
+Bytecoin       (BCN)   519.1 MH/s    24h: $0.00    CryptoNight
+
 
 # Run a simulation of 1000 random trials to verify the algorithm is working.
-# Select coins of interest.  In this example, Monero, Loki, and Aeon.
+# Select coins of interest.  In this example, X-CASH, Monero, Conceal,
+# Lethean, and GRAFT are selected.
 # First the probabilities, the percents, of each coin is listed.
 # Next, the result of the 1000 random trials is shown.
 
-$ bmining -s 1000 xmr loki aeon
-Simulation 1000 [XMR LOKI AEON]
- XMR 52.2% LOKI 43.3% AEON 4.5%
- XMR: 511  LOKI: 444  AEON: 45
+$ bmining -s 1000 xcash xmr ccx lthn grft
+Simulation 1000 [XCASH XMR CCX LTHN GRFT]
+ XCASH 0.4% XMR 95.5% CCX 1.1% LTHN 0.6% GRFT 2.4%
+ XCASH: 5  XMR: 948  CCX: 11  LTHN: 8  GRFT: 28  
 
- # And finally an example on how it is envisioned the program will be used.
- # A coin is selected and passed on to the mining command line.
 
-$ COIN=`bmining xmr loki aeon`
+# And finally an example on how it is envisioned the program will be used.
+# A coin is selected and passed on to the mining command line.
+
+$ COIN=`bmining xcash xmr ccx lthn grft`
 $ echo $COIN
 XMR
+
+# The $COIN evironmental variable could then be used when starting the 
+# the mining program.
 ```
