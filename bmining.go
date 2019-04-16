@@ -10,8 +10,8 @@ import (
 	"time"
 )
 
-func dumpNetHashes() {
-	dumpCoins := hashrate.DumpCoinHash()
+func dumpNetHashes(coins []string) {
+	dumpCoins := hashrate.DumpCoinHash(coins)
 	for i := 0; i < len(dumpCoins); i++ {
 		fmt.Println(dumpCoins[i])
 	}
@@ -116,45 +116,79 @@ func simulation(count int, coins []string, h []float64, H []float64) {
 func main() {
 
 	rand.Seed(time.Now().UnixNano())
-	hashrate.PreInit()
 
 	const defaultHR float64 = 500
 
-	dump := flag.Bool("d", false, "dump coins supported and their network hashrate")
+	dmpf := flag.Bool("d", false, "dump coins supported and their network hashrate")
 	hash := flag.Float64("hr", defaultHR, "hashrate of the device")
-	simu := flag.Int("s", 0, "run simulation only")
+	help := flag.Bool("h", false, "help")
+	simu := flag.Int("s", 0, "run simulation [n] times")
+	//topc := flag.Int("t", 0, "select the the top [n] coins - USD 24h mining rewards")
 	verb := flag.Bool("v", false, "Verbose")
 
 	flag.Parse()
-
-	hashrate.InitCoinHash()
-
-	if *dump == true {
-		dumpNetHashes()
-		return
-	}
 
 	diag := fmt.Sprintf("dev hashrate: %.0f Hs; Coins: ", *hash)
 
 	coins := flag.Args()
 	// for debugging: coins := []string{"xmr", "loki", "aeon"}
 	count := len(coins)
-	h := make([]float64, count)
-	H := make([]float64, count)
 
-	if count == 0 {
-		fmt.Println("usage:  <list of coins to mine>")
+	dump := *dmpf // So we may modify dump for debugging
+	// For debugging: dump = true
+
+	if *help == true || (count == 0 && dump == false) {
+		fmt.Println(" usage: bmining [OPTION] [list of coins]\n")
+		fmt.Println("   -d      dump network hash rates")
+		fmt.Println("   -h      help")
+		fmt.Println("   -s [n]  run simulation for [n] trials")
+		//fmt.Println("   -t [n]  select the top [n] coins")
+		fmt.Println("   -v      verbose")
+		fmt.Println("")
 		return
 	}
 
+	hashrate.InitCoinHash()
+
+	// h is our device hashrate for the coin
+	// H is the network hashrate for the coin
+	h := make([]float64, count)
+	H := make([]float64, count)
+
 	for i := 0; i < count; i++ {
 		coins[i] = strings.ToUpper(coins[i])
-		if !hashrate.VerifyCoin(coins[i]) {
+		coin := hashrate.LookupCoin(coins[i])
+		if coin == nil {
 			fmt.Println("Unknown coin", coins[i])
 			return
 		}
 		h[i] = *hash
-		H[i] = hashrate.CoinHash[coins[i]]
+		H[i] = coin.NetHashRate
+
+		diag += coins[i]
+		diag += " "
+	}
+
+	if dump == true {
+		hashrate.InitCoinHash()
+		dumpNetHashes(coins)
+		return
+	}
+
+	hashrate.InitCoinHash()
+
+	// Populate the two maps:
+	//    h is the hashrate of our device for this coin
+	//    H is the network hashrate for this coin
+	for i := 0; i < count; i++ {
+		coins[i] = strings.ToUpper(coins[i])
+		coin := hashrate.LookupCoin(coins[i])
+		if coin == nil {
+			fmt.Println("Unknown coin", coins[i])
+			return
+		}
+		h[i] = *hash
+		H[i] = coin.NetHashRate
 
 		diag += coins[i]
 		diag += " "

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"sort"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -15,56 +15,73 @@ const GHs float64 = 1000000000
 const PHs float64 = 1000000000000
 const THs float64 = 1000000000000000
 
-// CoinHash maps a coin's symbol to its current network hashrate.
-var CoinHash = make(map[string]float64)
-
-// CoinName maps a coin's symbol to the coin's name.
-var CoinName = make(map[string]string)
-
-// CoinSymb maps a coin's name to the coin's symbol.
-var CoinSymb = make(map[string]string)
-
-// PreInit will initialize for command line verification.
-func PreInit() {
-	initCoinName()
-	initCoinSymb()
+type Coin struct {
+	Rank        int
+	Symbol      string
+	Name        string
+	Algorithm   string
+	XmrStakAlgo string
+	NetHashRate float64
+	USD24h      float64
 }
+
+var Coins []*Coin
 
 // InitCoinHash will initialize network hashrates of coins.
 func InitCoinHash() {
 	scrapeMineCryptoNight()
 }
 
-func initCoinName() {
-	CoinName["AEON"] = "Aeon"
-	CoinName["BCN"] = "Bytecoin"
-	CoinName["BLOC"] = "BLOC.money"
-	CoinName["DERO"] = "Dero"
-	CoinName["ETN"] = "Electroneum"
-	CoinName["IRD"] = "Iridium"
-	CoinName["KRB"] = "Karbo"
-	CoinName["LOKI"] = "Loki"
-	CoinName["SUMO"] = "Sumokoin"
-	CoinName["TRTL"] = "TurtleCoin"
-	CoinName["TUBE"] = "BitTube"
-	CoinName["XHV"] = "Haven Protocol"
-	CoinName["XTL"] = "Stellite"
-	CoinName["CCX"] = "Conceal"
-	CoinName["GRFT"] = "GRAFT"
-	CoinName["LTHN"] = "Lethean"
-	CoinName["MSR"] = "Masari"
-	CoinName["XMR"] = "Monero"
-	CoinName["RYO"] = "Ryo Currency"
-	CoinName["XUN"] = "UltraNote"
-	CoinName["WEB"] = "Webchain"
-	CoinName["XCASH"] = "X-CASH"
-}
+func scrapeCoinSection(n int, s string) (*Coin, string) {
 
-func initCoinSymb() {
-	// assume InitCoinName() has been called
-	for symb, name := range CoinName {
-		CoinSymb[name] = symb
+	var err error
+	var f float64
+
+	c := new(Coin)
+	c.Rank = n
+	// Pointing at the name
+	chunks := strings.SplitN(s, "</span>", 2)
+	c.Name = chunks[0]
+	// Followed by the symbol
+	chunks = strings.SplitN(chunks[1], "> (", 2)
+	chunks = strings.SplitN(chunks[1], ")</span>", 2)
+	c.Symbol = chunks[0]
+	// Reward USD for 24hr
+	chunks = strings.SplitN(chunks[1], "24h: $", 2)
+	chunks = strings.SplitN(chunks[1], "<", 2)
+	c.USD24h, err = strconv.ParseFloat(chunks[0], 64)
+	// Algorithm
+	chunks = strings.SplitN(chunks[1], "Algorithm: ", 2)
+	chunks = strings.SplitN(chunks[1], "<", 2)
+	c.Algorithm = chunks[0]
+	// Network hash rate
+	chunks = strings.SplitN(chunks[1], "Network hash rate: ", 2)
+	hashUnits := strings.SplitN(chunks[1], " ", 2)
+	// f will be the MH/s (or other hash units)
+	f, err = strconv.ParseFloat(hashUnits[0], 64)
+	if err != nil {
+		fmt.Println(err)
+		return nil, ""
 	}
+	// Verify and convert the hash units
+	verify := strings.SplitN(hashUnits[1], "<", 2)
+	if verify[0] == "KH/s" || verify[0] == "kH/s" {
+		f *= KHs
+	} else if verify[0] == "MH/s" {
+		f *= MHs
+	} else if verify[0] == "GH/s" {
+		f *= GHs
+	} else if verify[0] == "PH/s" {
+		f *= PHs
+	} else if verify[0] == "TH/s" {
+		f *= THs
+	} else {
+		fmt.Println("Unknown hashrate unit ", verify[0])
+		return nil, ""
+	}
+	c.NetHashRate = f
+
+	return c, verify[1]
 }
 
 func scrapeMineCryptoNight() {
@@ -73,7 +90,7 @@ func scrapeMineCryptoNight() {
 
 	resp, err := http.Get(url)
 	if err != nil {
-		fmt.Println("http.Get failed", err)
+		fmt.Println("http.Get failed for url", url, err)
 		return
 	}
 
@@ -84,92 +101,95 @@ func scrapeMineCryptoNight() {
 	}
 	scrape := string(bytes)
 
-	/*
-			*  Scrape the 'Network hash rate' and the coin symbol.
-			*  The text is of the form:
-			*
-		    *  Algorithm: CryptoNight-Lite v1
-		    *  Difficulty: 6,633,307,490
-		    *  Network hash rate: 27.64 MH/s
-			*  Last block reward: 6.413 AEON
-			*
-			*  In this case the coin is AEON and the netHashRate is 27.64 MH/s
-	*/
-
-	dif := "Difficulty: "
-	nsr := "Network hash rate: "
-	lbr := "Last block reward: "
-	chunks := strings.SplitAfterN(scrape, dif, 2)
-
-	for len(chunks) == 2 {
-		// Find the "Network hash rate"
-		chunks = strings.SplitAfterN(chunks[1], nsr, 2)
-		hashUnits := strings.SplitN(chunks[1], " ", 2)
-		// f will be the MH/s (or other hash units)
-		f, err := strconv.ParseFloat(hashUnits[0], 64)
-		if err != nil {
-			fmt.Println(err)
-			return
+	// Parse through at most 21 sections
+	coins := make([]*Coin, 21)
+	n := 1
+	for ; n < 22; n++ {
+		if scrape == "" {
+			break
 		}
-
-		// Verify the hash units
-		verify := strings.SplitN(hashUnits[1], "<", 2)
-		if verify[0] == "KH/s" || verify[0] == "kH/s" {
-			f *= KHs
-		} else if verify[0] == "MH/s" {
-			f *= MHs
-		} else if verify[0] == "GH/s" {
-			f *= GHs
-		} else if verify[0] == "PH/s" {
-			f *= PHs
-		} else if verify[0] == "TH/s" {
-			f *= THs
+		x := "<span>"
+		if n < 10 {
+			x += "[1-9]"
+		} else if n < 20 {
+			x += "1[0-9]"
 		} else {
-			fmt.Println("Unknown hashrate unit ", verify[0])
-			return
+			x += "2[0-9]"
 		}
-
-		// Now scrape the coin symbol
-		chunks = strings.SplitAfterN(hashUnits[1], lbr, 2)
-		chunks = strings.SplitAfterN(chunks[1], " ", 2)
-		chunks = strings.SplitN(chunks[1], "<", 2)
-		coin := chunks[0]
-		// Map the coin to its network hashrate
-		CoinHash[coin] = f
-		// Continue for the next coin
-		chunks = strings.SplitAfterN(chunks[1], dif, 2)
+		x += "\\. "
+		chunks := regexp.MustCompile(x).Split(scrape, 2)
+		if len(chunks) != 2 {
+			break
+		}
+		coins[n-1], scrape = scrapeCoinSection(n, chunks[1])
 	}
+
+	if n == 1 {
+		// Mishap
+		fmt.Println("No coins found.")
+		return
+	}
+
+	Coins = make([]*Coin, n-1)
+	copy(Coins, coins[:n-1])
 }
 
-func DumpCoinHash() []string {
+func contains(a []string, x string) bool {
+	for _, n := range a {
+		if x == n {
+			return true
+		}
+	}
+	return false
+}
 
-	const humanPad int = 10
+func DumpCoinHash(coins []string) []string {
+
 	const namePad int = 15
 	const symbPad int = 23
 
-	dump := make([]string, len(CoinHash))
+	const humanPad int = 10
+	const usd24Pad int = 30
+
+	cnt := len(coins)
+	all := (cnt == 0)
+
+	if all == true {
+		cnt = len(Coins)
+	}
+
+	dump := make([]string, cnt)
 	i := 0
 
-	for k, v := range CoinHash {
-		s := CoinName[k]
+	for _, coin := range Coins {
+		// Skip if not a coin of interest
+		if !(all || contains(coins, coin.Symbol)) {
+			continue
+		}
+		s := coin.Name
 		for len(s) < namePad {
 			s += " "
 		}
-		s = s + "(" + k + ") "
+		s = s + "(" + coin.Symbol + ") "
 		for len(s) < symbPad {
 			s += " "
 		}
 		// Pad to a length of 10
-		h := HumanHs(v)
+		h := HumanHs(coin.NetHashRate)
 		for len(h) < humanPad {
 			h = " " + h
 		}
 		s += h
+
+		usd24 := fmt.Sprintf("    24h: $%.2f", coin.USD24h)
+		s += usd24
+		s += "    "
+		s += coin.Algorithm
 		dump[i] = s
 		i++
 	}
 
-	sort.Strings(dump)
+	//sort.Strings(dump)
 
 	return dump
 }
@@ -195,7 +215,12 @@ func HumanHs(f float64) string {
 	return s
 }
 
-// VerifyCoin returns true if the coin symbol is supported.
-func VerifyCoin(symb string) bool {
-	return CoinName[symb] != ""
+// LookupCoin returns pointer to the coin
+func LookupCoin(symb string) *Coin {
+	for _, coin := range Coins {
+		if symb == coin.Symbol {
+			return coin
+		}
+	}
+	return nil
 }
