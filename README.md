@@ -1,14 +1,15 @@
 # bmining
 
-Balanced mininig.  Balanced in terms of what coin to mine. The goal is maintain an even hashrate distribution across all chains being mined.
+Balanced mining (bmining) in terms of what coin to mine with regard to their network hashrates. The goal is maintain an even hashrate distribution across all chains being mined.
 
 Reference:
     "Responsible mining: probabilistic hashrate distribution", 
         Mitchell P. Krawiec-Thayer, other authors ...
 
-## Glossary
+## Motivation
 
-**bminer** - Balanced miner implemented in a distributed fashion.
+Auto-switching mining pools typically follow a financially-greedy algorthim that distributes hashrate based on various token's exchange rates and mining costs. In the case where it is desired to deploy millions of dormant computers/GPUs for mining, using the greedy algorithm will add variablity to the network hashrate and thus reduce the predictability of mining income for other users. The bmining program implements a probabilistic coin selection based on the total network hashrate.
+
 
 ## Notes
 
