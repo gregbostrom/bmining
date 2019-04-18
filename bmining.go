@@ -136,6 +136,7 @@ func main() {
 
 	dump := *dmpf // So we may modify dump for debugging
 	// For debugging: dump = true
+	dump = true
 
 	if *help == true || (count == 0 && dump == false) {
 		fmt.Println(" usage: bmining [OPTION] [list of coins]\n")

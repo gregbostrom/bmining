@@ -61,7 +61,8 @@ func scrapeCoinSection(n int, s string) (*Coin, string) {
 	f, err = strconv.ParseFloat(hashUnits[0], 64)
 	if err != nil {
 		fmt.Println(err)
-		return nil, ""
+		// Try to recover
+		return nil, hashUnits[1]
 	}
 	// Verify and convert the hash units
 	verify := strings.SplitN(hashUnits[1], "<", 2)
@@ -76,8 +77,9 @@ func scrapeCoinSection(n int, s string) (*Coin, string) {
 	} else if verify[0] == "TH/s" {
 		f *= THs
 	} else {
-		fmt.Println("Unknown hashrate unit ", verify[0])
-		return nil, ""
+		fmt.Println("Unknown hashrate unit ", verify[0], c.Name)
+		// Try to recover
+		return nil, verify[1]
 	}
 	c.NetHashRate = f
 
@@ -102,9 +104,13 @@ func scrapeMineCryptoNight() {
 	scrape := string(bytes)
 
 	// Parse through at most 21 sections
-	coins := make([]*Coin, 21)
+	const maxCoins int = 21
+	coins := make([]*Coin, maxCoins)
+	// icoins indexs the actual coins parse successfully
+	icoins := 0
+	// n counts the sections
 	n := 1
-	for ; n < 22; n++ {
+	for ; n < maxCoins+1; n++ {
 		if scrape == "" {
 			break
 		}
@@ -121,7 +127,11 @@ func scrapeMineCryptoNight() {
 		if len(chunks) != 2 {
 			break
 		}
-		coins[n-1], scrape = scrapeCoinSection(n, chunks[1])
+		coins[icoins], scrape = scrapeCoinSection(n, chunks[1])
+		// Count it if we got one.
+		if coins[icoins] != nil {
+			icoins++
+		}
 	}
 
 	if n == 1 {
@@ -130,8 +140,8 @@ func scrapeMineCryptoNight() {
 		return
 	}
 
-	Coins = make([]*Coin, n-1)
-	copy(Coins, coins[:n-1])
+	Coins = make([]*Coin, icoins)
+	copy(Coins, coins[:icoins])
 }
 
 func contains(a []string, x string) bool {
