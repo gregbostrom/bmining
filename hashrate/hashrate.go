@@ -22,6 +22,7 @@ type Coin struct {
 	Algorithm   string
 	XmrStakAlgo string
 	NetHashRate float64
+	PriceUSD    string
 	USD24h      float64
 }
 
@@ -89,7 +90,12 @@ func scrapeCoinSection(n int, s string) (*Coin, string) {
 	}
 	c.NetHashRate = f
 
-	return c, verify[1]
+	// Price USD
+	chunks = strings.SplitN(verify[1], "Price USD: ", 2)
+	chunks = strings.SplitN(chunks[1], "<", 2)
+	c.PriceUSD = chunks[0]
+
+	return c, chunks[1]
 }
 
 func scrapeMineCryptoNight() {
@@ -163,6 +169,7 @@ func DumpCoinHash(coins []string) []string {
 
 	const namePad int = 15
 	const symbPad int = 23
+	const pricePad int = 34
 
 	const humanPad int = 10
 	const usd24Pad int = 30
@@ -190,6 +197,11 @@ func DumpCoinHash(coins []string) []string {
 		for len(s) < symbPad {
 			s += " "
 		}
+		s = s + coin.PriceUSD
+		for len(s) < pricePad {
+			s += " "
+		}
+
 		// Pad to a length of 10
 		h := HumanHs(coin.NetHashRate)
 		for len(h) < humanPad {
@@ -197,15 +209,13 @@ func DumpCoinHash(coins []string) []string {
 		}
 		s += h
 
-		usd24 := fmt.Sprintf("    24h: $%.2f", coin.USD24h)
+		usd24 := fmt.Sprintf("   24h: $%.2f", coin.USD24h)
 		s += usd24
-		s += "    "
+		s += "   "
 		s += coin.Algorithm
 		dump[i] = s
 		i++
 	}
-
-	//sort.Strings(dump)
 
 	return dump
 }

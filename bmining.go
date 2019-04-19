@@ -131,15 +131,17 @@ func main() {
 	diag := fmt.Sprintf("dev hashrate: %.0f Hs; Coins: ", *hash)
 
 	coins := flag.Args()
-	// for debugging: coins := []string{"xmr", "loki", "aeon"}
 	count := len(coins)
 
 	dump := *dmpf // So we may modify dump for debugging
-	// For debugging: dump = true
-	dump = true
+	// For debugging:
+	// dump = true
 
 	if *help == true || (count == 0 && dump == false) {
 		fmt.Println(" usage: bmining [OPTION] [list of coins]\n")
+		fmt.Println("   Select a coin from the list using probabilistic hashrate distribution")
+		fmt.Println("       based on the total network hashrate.")
+		fmt.Println("")
 		fmt.Println("   -d      dump network hash rates")
 		fmt.Println("   -h      help")
 		fmt.Println("   -s [n]  run simulation for [n] trials")

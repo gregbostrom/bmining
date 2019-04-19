@@ -30,53 +30,54 @@ Logic:
 $ bmining -h
  usage: bmining [OPTION] [list of coins]
 
+   Select a coin from the list using probabilistic hashrate distribution
+       based on the total network hashrate.
+
    -d      dump network hash rates
    -h      help
    -s [n]  run simulation for [n] trials
    -v      verbose
 
-# Fetch and dump network hashrates
+# Fetch and dump price, network hashrate, 24hr mining reward, and algorithm
 $ bmining -d
-X-CASH         (XCASH)   1.5 MH/s    24h: $0.62    CryptoNight HeavyX
-Monero         (XMR)   307.8 MH/s    24h: $0.43    CryptoNight R (v4)
-Conceal        (CCX)     3.7 MH/s    24h: $0.43    CryptoNight Conceal
-Lethean        (LTHN)    2.0 MH/s    24h: $0.42    CryptoNight R (v4)
-GRAFT          (GRFT)    8.2 MH/s    24h: $0.32    CryptoNight v2
-Masari         (MSR)     5.5 MH/s    24h: $0.29    CryptoNight Fast v2
-Ryo Currency   (RYO)     2.2 MH/s    24h: $0.29    CryptoNight Heavy
-BitTube        (TUBE)   12.1 MH/s    24h: $0.25    CryptoNight Saber
-Haven Protocol (XHV)    20.4 MH/s    24h: $0.18    CryptoNight Haven
-Stellite       (XTL)    20.5 MH/s    24h: $0.12    CryptoNight v2
-TurtleCoin     (TRTL)  268.0 MH/s    24h: $0.12    CryptoNight-Lite v1
-Aeon           (AEON)   25.4 MH/s    24h: $0.08    CryptoNight-Lite v1
-Loki           (LOKI)  210.3 MH/s    24h: $0.02    CryptoNight Heavy
-BLOC.money     (BLOC)    4.4 MH/s    24h: $0.01    CryptoNight Haven
-Dero           (DERO)   80.3 MH/s    24h: $0.01    CryptoNight
-Karbo          (KRB)    32.3 MH/s    24h: $0.01    CryptoNight
-Electroneum    (ETN)       3 GH/s    24h: $0.01    CryptoNight
-Sumokoin       (SUMO)   93.7 MH/s    24h: $0.01    CryptoNight
-Bytecoin       (BCN)   519.1 MH/s    24h: $0.00    CryptoNight
+X-CASH         (XCASH) $0.000040    1.7 MH/s   24h: $0.64   CryptoNight HeavyX
+Conceal        (CCX)   $0.17        3.4 MH/s   24h: $0.49   CryptoNight Conceal
+Monero         (XMR)   $68.20     314.2 MH/s   24h: $0.43   CryptoNight R (v4)
+Lethean        (LTHN)  $0.0015      2.1 MH/s   24h: $0.42   CryptoNight R (v4)
+Masari         (MSR)   $0.14        4.2 MH/s   24h: $0.34   CryptoNight Fast v2
+Ryo Currency   (RYO)   $0.0643      2.1 MH/s   24h: $0.31   CryptoNight Heavy
+Haven Protocol (XHV)   $0.45       13.5 MH/s   24h: $0.28   CryptoNight Haven
+BitTube        (TUBE)  $0.0471     14.6 MH/s   24h: $0.23   CryptoNight Saber
+Stellite       (XTL)   $0.0001     14.3 MH/s   24h: $0.12   CryptoNight v2
+TurtleCoin     (TRTL)  $0.0002    304.1 MH/s   24h: $0.10   CryptoNight-Lite v1
+Aeon           (AEON)  $0.38       23.9 MH/s   24h: $0.09   CryptoNight-Lite v1
+Loki           (LOKI)  $0.25      236.5 MH/s   24h: $0.01   CryptoNight Heavy
+BLOC.money     (BLOC)  $0.0082      4.6 MH/s   24h: $0.01   CryptoNight Haven
+Sumokoin       (SUMO)  $0.0404     68.1 MH/s   24h: $0.01   CryptoNight
+Dero           (DERO)  $1.04       77.5 MH/s   24h: $0.01   CryptoNight
+Karbo          (KRB)   $0.0872     30.8 MH/s   24h: $0.01   CryptoNight
+Electroneum    (ETN)   $0.0056        3 GH/s   24h: $0.01   CryptoNight
+Bytecoin       (BCN)   $0.0009    398.6 MH/s   24h: $0.00   CryptoNight
 
 
 # Run a simulation of 1000 random trials to verify the algorithm is working.
-# Select coins of interest.  In this example, X-CASH, Monero, Conceal,
-# Lethean, and GRAFT are selected.
+# In this example, X-CASH, Lethean, Conceal, and Monero are selected.
 # First the probabilities, the percents, of each coin is listed.
 # Next, the result of the 1000 random trials is shown.
 
-$ bmining -s 1000 xcash xmr ccx lthn grft
-Simulation 1000 [XCASH XMR CCX LTHN GRFT]
- XCASH 0.4% XMR 95.5% CCX 1.1% LTHN 0.6% GRFT 2.4%
- XCASH: 5  XMR: 948  CCX: 11  LTHN: 8  GRFT: 28  
+$ bmining -s 1000  xcash lthn ccx xmr
+Simulation 1000 [XCASH LTHN CCX XMR]
+ XCASH 0.5% LTHN 0.6% CCX 1.1% XMR 97.7%
+ XCASH: 10  LTHN: 5  CCX: 11  XMR: 974  
 
 
 # And finally an example on how it is envisioned the program will be used.
 # A coin is selected and passed on to the mining command line.
 
-$ COIN=`bmining xcash xmr ccx lthn grft`
+$ COIN=`bmining xcash lthn ccx xmr`
 $ echo $COIN
 XMR
 
-# The $COIN evironmental variable could then be used when starting the 
+# The $COIN evironmental variable would then be used when starting the 
 # the mining program.
 ```
