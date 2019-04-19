@@ -149,7 +149,7 @@ func main() {
 		return
 	}
 
-	hashrate.InitCoinHash()
+	hashrate.InitCoinHash(*verb)
 
 	// h is our device hashrate for the coin
 	// H is the network hashrate for the coin
@@ -171,12 +171,9 @@ func main() {
 	}
 
 	if dump == true {
-		hashrate.InitCoinHash()
 		dumpNetHashes(coins)
 		return
 	}
-
-	hashrate.InitCoinHash()
 
 	// Populate the two maps:
 	//    h is the hashrate of our device for this coin

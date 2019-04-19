@@ -26,9 +26,11 @@ type Coin struct {
 }
 
 var Coins []*Coin
+var verbose bool
 
 // InitCoinHash will initialize network hashrates of coins.
-func InitCoinHash() {
+func InitCoinHash(v bool) {
+	verbose = v
 	scrapeMineCryptoNight()
 }
 
@@ -60,7 +62,9 @@ func scrapeCoinSection(n int, s string) (*Coin, string) {
 	// f will be the MH/s (or other hash units)
 	f, err = strconv.ParseFloat(hashUnits[0], 64)
 	if err != nil {
-		fmt.Println(err)
+		if verbose == true {
+			fmt.Println(err)
+		}
 		// Try to recover
 		return nil, hashUnits[1]
 	}
@@ -77,7 +81,9 @@ func scrapeCoinSection(n int, s string) (*Coin, string) {
 	} else if verify[0] == "TH/s" {
 		f *= THs
 	} else {
-		fmt.Println("Unknown hashrate unit ", verify[0], c.Name)
+		if verbose == true {
+			fmt.Println("Unknown hashrate unit ", verify[0], c.Name)
+		}
 		// Try to recover
 		return nil, verify[1]
 	}
