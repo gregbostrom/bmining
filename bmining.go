@@ -1,13 +1,14 @@
 package main
 
 import (
-	"bmining/hashrate"
 	"errors"
 	"flag"
 	"fmt"
 	"math/rand"
 	"strings"
 	"time"
+
+	"github.com/gregbostrom/bmining/hashrate"
 )
 
 func dumpNetHashes(coins []string) {
